@@ -45,47 +45,53 @@ endif
 ################################################################################
 # Sources
 ################################################################################
-LIBUNWIND_VERSION=7.0.0
-LIBUNWIND_URL=http://releases.llvm.org/$(LIBUNWIND_VERSION)/libunwind-$(LIBUNWIND_VERSION).src.tar.xz
-LIBUNWIND_PATCHDIR=$(LIBUNWIND_BASE)/patches
+LIBUNWIND_VERSION = 15.0.5
+LIBUNWIND_URL = https://github.com/llvm/llvm-project/releases/download/llvmorg-$(LIBUNWIND_VERSION)/libunwind-$(LIBUNWIND_VERSION).src.tar.xz
+LIBUNWIND_PATCHDIR = $(LIBUNWIND_BASE)/patches
 $(eval $(call fetch,libunwind,$(LIBUNWIND_URL)))
 $(eval $(call patch,libunwind,$(LIBUNWIND_PATCHDIR),libunwind-$(LIBUNWIND_VERSION).src))
 
 ################################################################################
 # Helpers
 ################################################################################
-LIBUNWIND_SUBDIR=libunwind-$(LIBUNWIND_VERSION).src
-LIBUNWIND_SRC=$(LIBUNWIND_ORIGIN)/$(LIBUNWIND_SUBDIR)
+LIBUNWIND_SRC = $(LIBUNWIND_ORIGIN)/libunwind-$(LIBUNWIND_VERSION).src
 
 ################################################################################
 # Library includes
 ################################################################################
-CINCLUDES-$(CONFIG_LIBUNWIND) += -I$(LIBUNWIND_SRC)/include
-CXXINCLUDES-$(CONFIG_LIBUNWIND) += -I$(LIBUNWIND_SRC)/include
-
 LIBUNWIND_CINCLUDES-y   += -I$(LIBUNWIND_SRC)/src
 LIBUNWIND_CXXINCLUDES-y += -I$(LIBUNWIND_SRC)/src
+
+CINCLUDES-$(CONFIG_LIBUNWIND)   += -I$(LIBUNWIND_SRC)/include
+CXXINCLUDES-$(CONFIG_LIBUNWIND) += -I$(LIBUNWIND_SRC)/include
 
 ################################################################################
 # Global flags
 ################################################################################
-CONFIG_FLAGS   += -D _LIBUNWIND_HAS_NO_THREADS  -D __ELF__  -D _LIBUNWIND_IS_NATIVE_ONLY		\
-		  -D _LIBUNWIND_SUPPORT_DWARF_UNWIND -D _LIBUNWIND_IS_BAREMETAL
+LIBUNWIND_CONFIG_FLAGS += -D__STDC_CONSTANT_MACROS
+LIBUNWIND_CONFIG_FLAGS += -D__STDC_FORMAT_MACROS
+LIBUNWIND_CONFIG_FLAGS += -D__STDC_LIMIT_MACROS
+LIBUNWIND_CONFIG_FLAGS += -D_LIBUNWIND_IS_NATIVE_ONLY
+LIBUNWIND_CONFIG_FLAGS += -D_LIBUNWIND_IS_BAREMETAL
+LIBUNWIND_CONFIG_FLAGS += -D_LIBUNWIND_SUPPORT_DWARF_UNWIND
+LIBUNWIND_CONFIG_FLAGS += -D__ELF__
+LIBUNWIND_CONFIG_FLAGS += -D_LIBUNWIND_HAS_NO_THREADS
 
-LIBUNWIND_CFLAGS-y      +=  $(CONFIG_FLAGS)
-LIBUNWIND_CXXFLAGS-y    +=  $(CONFIG_FLAGS)
+LIBUNWIND_SUPPRESS_FLAGS += -Wno-unused-parameter
 
-LIBUNWIND_SUPPRESS_FLAGS += -Wno-unused-parameter -Wno-maybe-uninitialized
+LIBUNWIND_CFLAGS-y   += $(LIBUNWIND_CONFIG_FLAGS)
+LIBUNWIND_CXXFLAGS-y += $(LIBUNWIND_CONFIG_FLAGS) -std=c++11
 LIBUNWIND_CFLAGS-y   += $(LIBUNWIND_SUPPRESS_FLAGS)
 LIBUNWIND_CXXFLAGS-y += $(LIBUNWIND_SUPPRESS_FLAGS)
 
 ################################################################################
 # Library sources
 ################################################################################
-LIBUNWIND_SRCS-y += $(LIBUNWIND_SRC)/src/UnwindLevel1.c
+LIBUNWIND_SRCS-y += $(LIBUNWIND_SRC)/src/Unwind-EHABI.cpp
+LIBUNWIND_SRCS-y += $(LIBUNWIND_SRC)/src/Unwind-seh.cpp
 LIBUNWIND_SRCS-y += $(LIBUNWIND_SRC)/src/Unwind-sjlj.c
 LIBUNWIND_SRCS-y += $(LIBUNWIND_SRC)/src/UnwindLevel1-gcc-ext.c
-LIBUNWIND_SRCS-y += $(LIBUNWIND_SRC)/src/libunwind.cpp
-LIBUNWIND_SRCS-y += $(LIBUNWIND_SRC)/src/Unwind-EHABI.cpp
+LIBUNWIND_SRCS-y += $(LIBUNWIND_SRC)/src/UnwindLevel1.c
 LIBUNWIND_SRCS-y += $(LIBUNWIND_SRC)/src/UnwindRegistersRestore.S
 LIBUNWIND_SRCS-y += $(LIBUNWIND_SRC)/src/UnwindRegistersSave.S
+LIBUNWIND_SRCS-y += $(LIBUNWIND_SRC)/src/libunwind.cpp
